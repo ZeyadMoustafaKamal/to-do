@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form class="sign-up" method="post">
+  {% csrf_token %}
+    <h2>Sign Up</h2>
+    {% include 'partials/_alerts.html' %}
+    <label for="email">Email:</label>
+    <input type="email" required id="email" name="email">
+
+    <label for="password">Password:</label>
+    <input type="password" required id="password" name="password">
+
+    
+    <input type="submit" name="btnsubmit" value="Sign Up">
+
+  </form>
+{% endblock %}
