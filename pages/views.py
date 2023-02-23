@@ -8,12 +8,15 @@ from django.contrib import messages
 def index(request):
 
 
-    # If the user is authenticated => not anonymous show the tasks in the database
+    # If the user is authenticated => not anonymous show the tasks from the database
     # I made the tasks in a separate app to make my project ready for all future changes
     
     tasks = None
+    verified = None
+
     if not request.user.is_anonymous:
-        user = UserProfile.objects.get(user=request.user)
+        user = UserProfile.objects.get(user = request.user)
+        verified = user.verified
         tasks = user.tasks.all()
 
     if request.method == 'GET' and 'add-task' in request.GET:
@@ -50,7 +53,9 @@ def index(request):
         return redirect('index')
         
     context = {
-        'tasks':tasks
+        'tasks':tasks,
+        'verified':verified,
+        
     }
     return render(request,'pages/index.html',context)
     

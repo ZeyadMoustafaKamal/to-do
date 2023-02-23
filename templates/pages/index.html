@@ -7,7 +7,7 @@
     <div class="alert alert-danger" role="alert">
         Please, don't enter any sensetive data because this is just a test website
     </div>
-    {% if request.user.is_authenticated %}
+    {% if request.user.is_authenticated and verified %}
 
     <div class="add-form">
         <form class="add-task-form">

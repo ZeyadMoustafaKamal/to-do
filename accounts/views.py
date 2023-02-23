@@ -4,11 +4,17 @@ from django.contrib.auth.models import User
 from .models import UserProfile
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+import random
+from django.core.mail import send_mail
 # Create your views here.
 
 def signup(request):
+    # To use it in sending 6 digit code
+    global email
+    global userprofile
 
     if 'btnsubmit' in request.POST:
+        
         email = request.POST['email']
         password = request.POST['password']
 
@@ -31,10 +37,11 @@ def signup(request):
                     userprofile = UserProfile(user=user)
                     userprofile.save()
                     auth.login(request,user)
-                    return redirect('index')
+                    return redirect('verify')
+                    """return redirect('index') """
                 except ValidationError:
                     # show error if W-mail isn't valid
-                    messages.error(request,'Make sure that you wrote a correct E-mail')
+                    messages.error(request,'Make sure that you wrote a valid E-mail')
                 
                 
     return render(request,'accounts/signup.html')
@@ -70,3 +77,27 @@ def logout(request):
     if request.user.is_authenticated:
         auth.logout(request)
     return redirect('index')
+def verify(request):
+
+    #userprofile = UserProfile.objects.get(user = request.user)
+
+    if 'code' in request.POST:
+        print(request.POST['code'])
+        print(userprofile.code)
+        if request.POST['code'] == str(userprofile.code):
+            userprofile.verified = True
+            userprofile.code = 0
+            userprofile.save()
+            print(userprofile.verified)
+            return redirect('index')
+        else:
+            messages.error(request,'Invalid code')
+    if userprofile.code == 0:
+        code = random.randint(100000,999999)
+        subject = 'Here is the code to verify your E-mail'
+        userprofile.code = code
+        userprofile.save()
+        message = f'Hello verify your E-mail using this code {userprofile.code}'
+        send_mail(from_email='zmoustafa988@gmail.com', subject=subject, message=message, recipient_list=[email])
+    
+    return render(request,'accounts/email_verify.html')

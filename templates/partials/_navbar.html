@@ -4,12 +4,15 @@
       <li><a href="{% url 'whoami' %}">Who am I ?</a></li>
     </ul>
     <ul>
-      {% if not request.user.is_authenticated %}
+      {% if request.user.is_authenticated and verified %}
 
-        <li><a href="{% url 'signup' %}">Sign up</a></li>
-        <li><a href="{% url 'login' %}">Login</a></li>
-      {% else %}
         <li><a href="{% url 'logout' %}">Logout</a></li>
+
+      {% else %}
+
+      <li><a href="{% url 'signup' %}">Sign up</a></li>
+      <li><a href="{% url 'login' %}">Login</a></li>
+
       {% endif %}
     </ul>
 </nav>
