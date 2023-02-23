@@ -6,13 +6,12 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 import random
 from django.core.mail import send_mail
-# Create your views here.
 
 def signup(request):
     if request.user.is_authenticated:
         if UserProfile.objects.get(user=request.user).verified:
             return redirect('index')
-    # To use it in sending 6 digit code
+    # I want to use it in sending 6 digit code
     global email
     global userprofile
 
