@@ -9,6 +9,9 @@ from django.core.mail import send_mail
 # Create your views here.
 
 def signup(request):
+    if request.user.is_authenticated:
+        if UserProfile.objects.get(user=request.user).verified:
+            return redirect('index')
     # To use it in sending 6 digit code
     global email
     global userprofile
@@ -38,17 +41,19 @@ def signup(request):
                     userprofile.save()
                     auth.login(request,user)
                     return redirect('verify')
-                    """return redirect('index') """
                 except ValidationError:
-                    # show error if W-mail isn't valid
+                    # show error if the E-mail isn't valid
                     messages.error(request,'Make sure that you wrote a valid E-mail')
                 
                 
     return render(request,'accounts/signup.html')
 def login(request):
-    if request.user.is_authenticated:
+    if request.user.is_authenticated :
         # I can show an error and make the form disappear but I think that redirect to the home page is better
-        return redirect('index')
+        # First I didn't use this if stetement but It causes an issue because the user may not be verified but he may created an account so the request.use.is_authenticated will return True 
+        if UserProfile.objects.get(user=request.user).verified:
+            return redirect('index')
+            
     
     if request.method == 'POST' and 'btnsubmit' in request.POST:
         email = request.POST['email']
@@ -61,7 +66,7 @@ def login(request):
             # I think that the error that I am using email and password ... not username and password to check if the user is exists or not 
             # when I started to develop this app I used this to create an instance for the Use model user = User(email=email,password=password)
             # this shows an error while creating the second user because django puts a default value for the username if I didn't pass it and I can't use the same name twice for the username
-            # I can solve it by using user = User(username=email,password=password) 
+            # I solve it by using user = User(username=email,password=password) 
 
             user = User.objects.filter(email=email,password=password).first()
             if user is not None:
@@ -73,22 +78,22 @@ def login(request):
     return render(request,'accounts/login.html')
 def logout(request):
 
-    # this is a simple function to use
+    # This is a simple function just log the user out
     if request.user.is_authenticated:
         auth.logout(request)
     return redirect('index')
 def verify(request):
 
+    if request.user.is_authenticated:
+        if UserProfile.objects.get(user=request.user).verified:
+            return redirect('index')
     #userprofile = UserProfile.objects.get(user = request.user)
 
     if 'code' in request.POST:
-        print(request.POST['code'])
-        print(userprofile.code)
         if request.POST['code'] == str(userprofile.code):
             userprofile.verified = True
             userprofile.code = 0
             userprofile.save()
-            print(userprofile.verified)
             return redirect('index')
         else:
             messages.error(request,'Invalid code')
