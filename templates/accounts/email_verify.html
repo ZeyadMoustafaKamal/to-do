@@ -9,8 +9,8 @@
       <h2>Verify your E-mail</h2>
     {% include 'partials/_alerts.html' %}
   
-      <label for="code">The 6 digit code</label>
-      <input type="number" id="code" name="code">
+      <label for="{{form.code.id_for_label}}">The 6 digit code</label>
+      {{form.code}}
   
       <input type="submit" name="btnsubmit" value="verify">
 

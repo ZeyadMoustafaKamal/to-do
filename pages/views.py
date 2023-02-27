@@ -3,10 +3,8 @@ from tasks.models import Task
 from accounts.models import UserProfile
 from django.contrib import messages
 
-# Create your views here.
 
 def index(request):
-
 
     # If the user is authenticated => not anonymous show the tasks from the database
     # I made the tasks in a separate app to make my project ready for all future changes

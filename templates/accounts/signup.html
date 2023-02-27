@@ -5,14 +5,16 @@
   {% csrf_token %}
     <h2>Sign Up</h2>
     {% include 'partials/_alerts.html' %}
-    <label for="email">Email:</label>
-    <input type="email" required id="email" name="email">
+    <p>
+        <label for="{{ form.email.id_for_label }}">Email:</label>
+        {{ form.email }}
+    </p>
+    <p>
+        <label for="{{ form.password.id_for_label }}">password:</label>
+        {{ form.password }}
+    </p>
 
-    <label for="password">Password:</label>
-    <input type="password" required id="password" name="password">
-
-    
-    <input type="submit" name="btnsubmit" value="Sign Up">
+    <input type="submit" value="Sign up">
 
   </form>
 {% endblock %}

@@ -2,79 +2,76 @@ from django.shortcuts import render,redirect
 from django.contrib import messages,auth
 from django.contrib.auth.models import User
 from .models import UserProfile
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 import random
 from django.core.mail import send_mail
+from .forms import *
 
 def signup(request):
+    # I want to use it in the operation of sending 6 digit code
+    global email,userprofile
+
+    # if the user is already logged in
     if request.user.is_authenticated:
         if UserProfile.objects.get(user=request.user).verified:
             return redirect('index')
-    # I want to use it in sending 6 digit code
-    global email
-    global userprofile
-
-    if 'btnsubmit' in request.POST:
-        
-        email = request.POST['email']
-        password = request.POST['password']
-
-        # if the email and password fields are empty show an error ( the user can delete required attribute in inspect mode )
-
-        if email == '' or password == '':
-            messages.error(request, 'Please check the fields and try again')
-        
         else:
+            return redirect('verify')
+    
+
+    if request.method == 'POST':
+        form = Signup(request.POST)
+        
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+
             # if the email is exists show an error
             if User.objects.filter(email=email).first():
                 messages.error(request, 'This E-mail is already exists')
             else:
+
                 # first create the user instance and then create UserProfile instance
-                try:
-                    # check if the user entered a valid E-mail
-                    validate_email(email)
-                    user = User.objects.create(username = email, email = email, password = password)
-                    user.save()
-                    userprofile = UserProfile(user=user)
-                    userprofile.save()
-                    auth.login(request,user)
-                    return redirect('verify')
-                except ValidationError:
-                    # show error if the E-mail isn't valid
-                    messages.error(request,'Make sure that you wrote a valid E-mail')
                 
+                user = User.objects.create(username = email, email = email, password = password)
+                user.save()
+                userprofile = UserProfile(user=user)
+                userprofile.save()
+                auth.login(request,user)
+                return redirect('verify')
+        else:
+            # The user can change the attribute required
+            messages.error(request,'Please check the fields and try again')
+    else:
+        form = Signup()
                 
-    return render(request,'accounts/signup.html')
+    return render(request,'accounts/signup.html',{'form':form})
 def login(request):
     if request.user.is_authenticated :
         # I can show an error and make the form disappear but I think that redirect to the home page is better
         # First I didn't use this if stetement but It causes an issue because the user may not be verified but he may created an account so the request.use.is_authenticated will return True 
         if UserProfile.objects.get(user=request.user).verified:
             return redirect('index')
-            
     
-    if request.method == 'POST' and 'btnsubmit' in request.POST:
-        email = request.POST['email']
-        password = request.POST['password']
-        # again check if the email and passward are not empty
-        if email == '' or password == '':
-            messages.error(request, 'Please check the fields and try again')
-        else:
-            # I tried to use auth.authenticate() , but it shows an error
-            # I think that the error that I am using email and password ... not username and password to check if the user is exists or not 
-            # when I started to develop this app I used this to create an instance for the Use model user = User(email=email,password=password)
-            # this shows an error while creating the second user because django puts a default value for the username if I didn't pass it and I can't use the same name twice for the username
-            # I solve it by using user = User(username=email,password=password) 
+    if request.method == 'POST':
 
-            user = User.objects.filter(email=email,password=password).first()
+        form = Login(request.POST)
+        if form.is_valid():
+
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            user = User.objects.filter(email = email,password = password).first()
             if user is not None:
                 auth.login(request,user)
                 return redirect('index')
             else:
                 # If the email or the password are not correct 
-                messages.error(request,'Error while loggin into your account')
-    return render(request,'accounts/login.html')
+                messages.error(request,'Incorrect E-mail or password')
+        else:
+            messages.error(request,'Please check the fields and try again')
+    else:
+        form = Login()
+
+    return render(request,'accounts/login.html',{'form':form})
 def logout(request):
 
     # This is a simple function just log the user out
@@ -82,20 +79,30 @@ def logout(request):
         auth.logout(request)
     return redirect('index')
 def verify(request):
+    userprofile = UserProfile.objects.filter(user=request.user).first()
 
     if request.user.is_authenticated:
         if UserProfile.objects.get(user=request.user).verified:
             return redirect('index')
-    #userprofile = UserProfile.objects.get(user = request.user)
 
-    if 'code' in request.POST:
-        if request.POST['code'] == str(userprofile.code):
-            userprofile.verified = True
-            userprofile.code = 0
-            userprofile.save()
-            return redirect('index')
+    if request.method == 'POST':
+
+        form = Verify(request.POST)
+
+        # if the code is correct
+        if form.is_valid():
+
+            if form.cleaned_data['code'] == str(userprofile.code):
+                userprofile.verified = True
+                userprofile.code = 0
+                userprofile.save()
+                return redirect('index')
+            else:
+                messages.error(request,'Invalid code')
         else:
-            messages.error(request,'Invalid code')
+            messages.error(request,'Please check the fields and try again')
+    else:
+        form = Verify()
     if userprofile.code == 0:
         code = random.randint(100000,999999)
         subject = 'Here is the code to verify your E-mail'
@@ -104,4 +111,4 @@ def verify(request):
         message = f'Hello verify your E-mail using this code {userprofile.code}'
         send_mail(from_email='zmoustafa988@gmail.com', subject=subject, message=message, recipient_list=[email])
     
-    return render(request,'accounts/email_verify.html')
+    return render(request,'accounts/email_verify.html',{'form':form})
